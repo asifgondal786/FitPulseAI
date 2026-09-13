@@ -1,0 +1,45 @@
+name: Push to Vercel
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    test-phase:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+# We must install nodejs to verify that npm is installed
+            - name: Install Nodejs
+              uses: actions/setup-node@v4
+              with:
+                node-version: '20'
+                cache: 'npm'
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Test app
+              run: npm run lint
+
+    build-phase:
+        runs-on: ubuntu-latest
+        needs: test-phase
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Install Nodejs
+              uses: actions/setup-node@v4
+              with:
+                node-version: '20'
+                cache: 'npm'
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Build app
+              run: npm run build
