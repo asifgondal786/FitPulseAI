@@ -28,7 +28,7 @@ import './App.css'
 import { OnboardingView } from './OnboardingView'
 import { CoachView, NutritionView, ProgressView, SettingsView } from './WorkspaceViews'
 
-const API_BASE_URL = 'http://localhost:4000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
 
 type NavItem = 'Overview' | 'My plan' | 'Nutrition' | 'Progress' | 'Coach' | 'Settings'
 

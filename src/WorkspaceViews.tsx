@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ArrowUpRight, Check, ChevronRight, CircleCheck, Dumbbell, Flame, Plus, Send, Target, TrendingDown, Utensils, X, Zap } from 'lucide-react'
 
-const API_BASE_URL = 'http://localhost:4000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
 type ViewProps = { onBack: () => void; token: string }
 
 async function apiRequest<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
