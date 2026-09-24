@@ -1,0 +1,104 @@
+# The whole stack: database, AI service, API, and the built frontend.
+#
+#   docker compose up --build
+#
+# then open http://localhost:8080.
+#
+# This file lives in the project repo while the images it builds live in the two application repos, so
+# the build contexts below reach into the working tree at ./Backend and ./Frontend. Those folders are
+# gitignored here on purpose -- this repository tracks the project, not the applications -- which means
+# a clone of this repo alone cannot build this file. Clone all three side by side instead, which is the
+# layout the repositories are designed around.
+#
+# Compose reads a `.env` beside this file for the substitutions below.
+
+name: fitpulse
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fitpulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fitpulse}
+      POSTGRES_DB: ${POSTGRES_DB:-fitpulse}
+    volumes:
+      - fitpulse-postgres:/var/lib/postgresql/data
+      # Applied only when the data directory is empty, so it cannot re-run over a live database.
+      - ./Backend/db/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    healthcheck:
+      # pg_isready alone reports the postmaster rather than the database, so -U and -d are what stop
+      # the API starting against a server that is still in recovery.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fitpulse} -d ${POSTGRES_DB:-fitpulse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./Backend/ai-service
+    # Not published. The browser never calls this service -- PROJECT.md §17 -- so its only route is the
+    # API container over the compose network.
+    expose:
+      - "8001"
+    environment:
+      AI_PORT: 8001
+      AI_HOST: 0.0.0.0
+      # Empty means the deterministic path: no provider, no network, and a real reply.
+      AI_PROVIDER_URL: ${AI_PROVIDER_URL:-}
+      AI_PROVIDER_API_KEY: ${AI_PROVIDER_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-fitness-coach}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-8}
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./Backend
+    ports:
+      # Published because the browser calls this API directly with an absolute URL. Proxying /api
+      # through the frontend's nginx instead would work too, and would let this port stay closed -- but
+      # it would also mean the deployed Vercel bundle and the container took different paths to the
+      # same API, which is the kind of difference that only shows up in production.
+      - "${PORT:-4000}:4000"
+    environment:
+      PORT: 4000
+      AI_SERVICE_URL: http://ai-service:8001
+      # Pinned rather than left on `auto`. `auto` probes the database and silently falls back to the
+      # file store, which in a container means the data lives and dies with the container -- right for
+      # a laptop, and here it would look like it worked. See Backend/src/store.js.
+      PERSISTENCE: postgres
+      # Built from the same credentials the postgres service was given. To use Supabase instead,
+      # comment this line out and set SUPABASE_DATABASE_URL in .env.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fitpulse}:${POSTGRES_PASSWORD:-fitpulse}@postgres:5432/${POSTGRES_DB:-fitpulse}
+      # Must contain the origin the browser actually loads the frontend from. Getting this wrong is the
+      # CORS refusal §23 of PROJECT.md records, and the symptom is a register call that never arrives.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080}
+      BOOTSTRAP_SECRET: ${BOOTSTRAP_SECRET:-}
+      REQUEST_BODY_LIMIT: ${REQUEST_BODY_LIMIT:-65536}
+      SESSION_TTL_MS: ${SESSION_TTL_MS:-28800000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        # A build argument rather than an environment variable: Vite inlines this into the bundle, so
+        # the value has to be the URL the *browser* can reach, not the compose service name. The
+        # browser is not on the compose network and cannot resolve `backend`.
+        #
+        # Changing this requires `docker compose build frontend`, not just a restart.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  fitpulse-postgres:

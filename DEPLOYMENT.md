@@ -38,28 +38,55 @@ npm run dev     # dev server at http://localhost:5173
 
 ### Option A: Docker (recommended)
 
+The stack is four containers: Postgres, the Python AI service, the Node API, and the built frontend
+served by nginx. The AI service is not published to the host — the browser never calls it
+(PROJECT.md §17), so its only route in is the API over the compose network.
+
 ```bash
 # 1. SSH into your Hetzner VPS
 ssh root@your-server-ip
 
-# 2. Clone the repo
-git clone https://github.com/your-username/FitPulseAI.git
-cd FitPulseAI
+# 2. Clone the three repositories side by side. The project repo holds this file and the compose file
+#    at its root; the two application repos sit inside it and are what the images build from.
+git clone git@github.com:asifgondal786/FitPulseAI-Project.git fitpulse
+git clone git@github.com:asifgondal786/FitPulseAI-Backend.git fitpulse/Backend
+git clone git@github.com:asifgondal786/FitPulseAI.git fitpulse/Frontend
 
-# 3. Create .env from template and fill in real values
-cp Backend/.env.example Backend/.env
-nano Backend/.env   # add your Supabase keys, CORS origins, etc.
+cd fitpulse
 
-# 4. Build and start the container
-cd Backend
+# 3. Fill in real values — compose reads this file for the substitutions in docker-compose.yml
+cp Backend/.env.example .env
+nano .env   # POSTGRES_PASSWORD, ALLOWED_ORIGINS, and any provider keys
+
+# 4. Build and start the whole stack
 docker compose up -d --build
 
 # 5. Verify
-curl http://localhost:4000/health
-curl http://localhost:4000/health/database
+curl http://localhost:4000/health           # the API
+curl http://localhost:4000/health/database  # the API's view of Postgres
+curl -I http://localhost:8080/              # the frontend
 ```
 
-The container runs both the Node.js API (port 4000) and Python AI service (port 8001). Only port 4000 needs to be exposed to the public.
+Only 4000 and 8080 need to reach the internet, and only 8080 belongs behind a TLS terminator.
+Postgres and the AI service stay on the compose network.
+
+The backend can also come up on its own, without the frontend:
+
+```bash
+cd Backend
+cp .env.example .env
+docker compose up -d --build
+```
+
+Two things worth knowing before this is deployed for real:
+
+- **`VITE_API_BASE_URL` is a build argument, not an environment variable.** Vite inlines it into the
+  bundle at build time, so pointing the frontend somewhere else means `docker compose build frontend`,
+  not a restart. Left empty, the bundle is built with no API URL and refuses every request rather than
+  quietly defaulting to localhost.
+- **`ALLOWED_ORIGINS` must contain the origin the browser actually loads the frontend from.** Getting
+  this wrong is the CORS refusal PROJECT.md §23 records, and the symptom is a sign-in that never
+  arrives rather than an error anyone can read.
 
 ### Option B: Direct Node.js + Python
 
