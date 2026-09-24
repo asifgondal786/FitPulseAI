@@ -1,0 +1,50 @@
+# ── Secrets & environment files ─────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Node.js ────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ── Python ─────────────────────────────────────────────
+__pycache__/
+.pytest_cache/
+.venv/
+
+# ── Build output ────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ── Editor / OS files ───────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Logs ────────────────────────────────────────────────
+logs/
+*.log
+
+# ── The applications are versioned in their own repositories ────────────
+# This repository tracks the project itself: the plan, the build board, the deployment notes and
+# the one-command local launcher. The two applications under Backend/ and Frontend/ each carry
+# their own git history and their own GitHub remote, so this one deliberately tracks neither --
+# committing them here would put a second copy of the code on a second remote, and the two copies
+# would drift the moment either app was pushed on its own.
+#
+# It also keeps the offline stores out for good. Backend/data holds real health data, profiles and
+# the Memory Engine's personal facts, and the session store holds live tokens.
+Backend/
+Frontend/
+
+# ── The workflow in this directory is a per-repo one ────────────────────
+# .github/workflows/ci.yml here was written for a single checkout holding both applications side
+# by side, which is not how this project is versioned. It cannot run in this repository and is
+# not carried into either app, because each already has a workflow that passes on its own.
+.github/

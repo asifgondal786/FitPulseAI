@@ -1,0 +1,838 @@
+<title>FitPulse Build Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap">
+
+<style>
+:root {
+  --ground: #f6f8f5;
+  --surface: #ffffff;
+  --surface-sunk: #eef2ee;
+  --line: #dfe6df;
+  --line-soft: #e9efe9;
+  --ink: #20251f;
+  --ink-soft: #4c574d;
+  --muted: #7f8e83;
+  --deep: #1f4c3a;
+  --brand: #2a6b4c;
+  --accent: #2f8a5c;
+  --accent-wash: #e7f2ea;
+
+  --done: #2f8a5c;
+  --done-wash: #e7f2ea;
+  --partial: #a86a1f;
+  --partial-wash: #fbf0df;
+  --todo: #6f7c87;
+  --todo-wash: #eceff2;
+  --risk: #a4523f;
+  --risk-wash: #fbeeeb;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #141a16;
+    --surface: #1b231d;
+    --surface-sunk: #10150f;
+    --line: #2c362e;
+    --line-soft: #232c25;
+    --ink: #e8efe9;
+    --ink-soft: #b9c6bc;
+    --muted: #8d9c92;
+    --deep: #0f2b20;
+    --brand: #2f7a56;
+    --accent: #56bd83;
+    --accent-wash: #1d3328;
+
+    --done: #56bd83;
+    --done-wash: #1d3328;
+    --partial: #d9a15a;
+    --partial-wash: #33281a;
+    --todo: #93a0aa;
+    --todo-wash: #232b31;
+    --risk: #d98a76;
+    --risk-wash: #33211d;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #141a16;
+  --surface: #1b231d;
+  --surface-sunk: #10150f;
+  --line: #2c362e;
+  --line-soft: #232c25;
+  --ink: #e8efe9;
+  --ink-soft: #b9c6bc;
+  --muted: #8d9c92;
+  --deep: #0f2b20;
+  --brand: #2f7a56;
+  --accent: #56bd83;
+  --accent-wash: #1d3328;
+
+  --done: #56bd83;
+  --done-wash: #1d3328;
+  --partial: #d9a15a;
+  --partial-wash: #33281a;
+  --todo: #93a0aa;
+  --todo-wash: #232b31;
+  --risk: #d98a76;
+  --risk-wash: #33211d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-block: 0 72px;
+  padding-inline: 20px;
+}
+
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+
+.masthead {
+  background: linear-gradient(150deg, var(--deep) 0%, var(--brand) 100%);
+  color: #eaf4ec;
+  border-radius: 0 0 20px 20px;
+  padding: 30px clamp(20px, 4vw, 40px) 34px;
+  margin-inline: -20px;
+  margin-bottom: 34px;
+}
+
+.masthead-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.4px;
+  color: #fff;
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.17);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.stamp {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: #9fd0b2;
+  font-variant-numeric: tabular-nums;
+}
+
+.masthead h1 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: clamp(27px, 4.4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -1.3px;
+  color: #fff;
+  margin: 22px 0 10px;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+
+.masthead p {
+  margin: 0;
+  max-width: 62ch;
+  color: #bfe0cb;
+  font-size: 14px;
+}
+
+/* ── Vitals ───────────────────────────────────────────────────────────────── */
+
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 26px;
+}
+
+.vital {
+  background: rgba(12, 34, 24, 0.32);
+  padding: 15px 17px;
+}
+
+.vital b {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 25px;
+  letter-spacing: -0.9px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.vital span {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.85px;
+  text-transform: uppercase;
+  color: #9ecdaf;
+  margin-top: 3px;
+}
+
+/* ── Section scaffolding ──────────────────────────────────────────────────── */
+
+section { margin-top: 46px; }
+
+.sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  margin-bottom: 6px;
+}
+
+.sec-head h2 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.55px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.sec-head .rule {
+  flex: 1 1 60px;
+  height: 1px;
+  background: var(--line);
+  min-width: 24px;
+}
+
+.sec-head .count {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.85px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lede {
+  margin: 0 0 20px;
+  max-width: 70ch;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+/* ── Phase rail ───────────────────────────────────────────────────────────── */
+
+.rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+}
+
+.phase {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 15px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.phase::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--todo);
+}
+
+.phase[data-state="done"]::before { background: var(--done); }
+.phase[data-state="closing"]::before { background: var(--partial); }
+.phase[data-state="todo"]::before { background: var(--todo); }
+
+.phase .num {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 1.1px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.phase .name {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.phase .meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+/* ── Chips ────────────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.75px;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.chip[data-s="done"] { color: var(--done); background: var(--done-wash); }
+.chip[data-s="partial"] { color: var(--partial); background: var(--partial-wash); }
+.chip[data-s="todo"] { color: var(--todo); background: var(--todo-wash); }
+.chip[data-s="risk"] { color: var(--risk); background: var(--risk-wash); }
+
+/* ── Work rows ────────────────────────────────────────────────────────────── */
+
+.work { display: flex; flex-direction: column; gap: 10px; }
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 4px 14px;
+  align-items: start;
+}
+
+.item .rank {
+  grid-row: 1 / span 3;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+
+.item h3 {
+  grid-column: 2;
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 15.5px;
+  letter-spacing: -0.35px;
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.item p {
+  grid-column: 2;
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  max-width: 74ch;
+}
+
+.item .why {
+  grid-column: 2;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.item .why b { color: var(--ink-soft); font-weight: 600; }
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 13.5px; }
+
+th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-sunk);
+  white-space: nowrap;
+}
+
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: 0; }
+td:first-child { color: var(--ink); font-weight: 500; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 12.5px; background: var(--surface-sunk); padding: 1px 5px; border-radius: 5px; color: var(--ink); }
+
+/* ── Command block ────────────────────────────────────────────────────────── */
+
+.cmds { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+
+/* The test command is the odd one out — not a process to keep running — so it takes the whole
+   row rather than sitting alone beside two columns of dead space. */
+.cmds .cmd:last-child { grid-column: 1 / -1; }
+
+.cmd {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.cmd h3 {
+  margin: 0 0 2px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+}
+
+.cmd .port { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 9px; }
+
+.cmd pre {
+  margin: 0;
+  background: var(--surface-sunk);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+/* ── Callout ──────────────────────────────────────────────────────────────── */
+
+.note {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 15px 18px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  max-width: 78ch;
+}
+
+.note b { color: var(--ink); }
+.note.warn { border-left-color: var(--partial); }
+.note.stop { border-left-color: var(--risk); }
+
+/* ── Decision list ────────────────────────────────────────────────────────── */
+
+.decisions { display: flex; flex-direction: column; gap: 9px; }
+
+.decision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 17px;
+}
+
+.decision dt {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.decision dd {
+  margin: 2px 0 0;
+  grid-column: 1;
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 72ch;
+}
+
+.decision .chip { grid-row: 1; grid-column: 2; }
+
+footer {
+  margin-top: 52px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  justify-content: space-between;
+}
+
+@media (max-width: 560px) {
+  .item { grid-template-columns: minmax(0, 1fr); }
+  .item .rank { grid-row: auto; font-size: 12px; }
+  .item h3, .item p, .item .why { grid-column: 1; }
+  .decision { grid-template-columns: minmax(0, 1fr); }
+  .decision .chip { grid-row: auto; grid-column: 1; margin-top: 8px; }
+  .decision dd { grid-column: 1; }
+}
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="wordmark">
+        <span class="mark" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h3l2.5-7 3 14 2.5-7h3"/>
+		      </svg>
+        </span>
+        fitpulseai
+      </div>
+      <div class="stamp">Updated 24 Sep 2026</div>
+    </div>
+
+    <h1>The roadmap is built through Phase&nbsp;4.</h1>
+    <p>Four phases of the master plan are running end to end on a local stack, and Phase 4's recorded gaps are closed. Nothing is deployed to a second person yet, and that is deliberate.</p>
+
+    <div class="vitals">
+      <div class="vital"><b>282</b><span>Backend tests passing</span></div>
+      <div class="vital"><b>0</b><span>Frontend tests</span></div>
+      <div class="vital"><b>30</b><span>Backend modules</span></div>
+      <div class="vital"><b>7,054</b><span>Backend lines</span></div>
+      <div class="vital"><b>2,874</b><span>Frontend lines</span></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <h2>Roadmap</h2>
+      <span class="rule"></span>
+      <span class="count">Phases 0–5</span>
+    </div>
+    <p class="lede">The master plan's own phases. Each is a real sequence, so the numbering is load-bearing rather than decorative.</p>
+
+    <div class="rail">
+      <div class="phase" data-state="done">
+        <span class="num">Phase 0</span>
+        <span class="name">Wedge Decision</span>
+        <span class="meta">Product definition only, no code</span>
+      </div>
+      <div class="phase" data-state="done">
+        <span class="num">Phase 1</span>
+        <span class="name">First 5 Minutes</span>
+        <span class="meta">Guest workout → onboarding → signup</span>
+      </div>
+      <div class="phase" data-state="done">
+        <span class="num">Phase 2</span>
+        <span class="name">Memory Engine</span>
+        <span class="meta">Genome, extraction, ranked recall</span>
+      </div>
+      <div class="phase" data-state="done">
+        <span class="num">Phase 3</span>
+        <span class="name">Predictive Intervention</span>
+        <span class="meta">Churn model, offers, letter</span>
+      </div>
+      <div class="phase" data-state="done">
+        <span class="num">Phase 4</span>
+        <span class="name">Voice + Hands-Free</span>
+        <span class="meta">Built — gaps closed 24 Sep</span>
+      </div>
+      <div class="phase" data-state="todo">
+        <span class="num">Phase 5</span>
+        <span class="name">Ecosystem</span>
+        <span class="meta">Gated on retention data</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Coming back to it</h2>
+      <span class="rule"></span>
+      <span class="count">Four commands</span>
+    </div>
+    <p class="lede">The stack runs locally right now: backend, the Python AI service, and Vite. All three need to be up before the app works. The store sits outside the repo and outside the temp directory on purpose — real health data and session tokens never enter version control, and a temp path would be wiped between runs.</p>
+
+    <div class="cmds">
+      <div class="cmd">
+        <h3>Backend</h3>
+        <div class="port">port 4000 · file store</div>
+        <pre>cd Backend
+PERSISTENCE=local \
+LOCAL_STORE_PATH="$LOCALAPPDATA/FitPulse/fitpulse.json" \
+node src/server.js</pre>
+      </div>
+      <div class="cmd">
+        <h3>AI service</h3>
+        <div class="port">port 8001 · Python</div>
+        <pre>cd Backend/ai-service
+AI_PORT=8001 python main.py</pre>
+      </div>
+      <div class="cmd">
+        <h3>Frontend</h3>
+        <div class="port">port 5173 · Vite</div>
+        <pre>cd Frontend
+npm run dev -- --host 0.0.0.0 \
+  --port 5173</pre>
+      </div>
+      <div class="cmd">
+        <h3>Tests</h3>
+        <div class="port">backend suite</div>
+        <pre>cd Backend
+node --test test/*.test.js</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>What's built</h2>
+      <span class="rule"></span>
+      <span class="count">Six packages</span>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Package</th><th class="num">Files</th><th>What it does</th><th class="num">Tests</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Backend/src</td><td class="num">13</td><td>Server, persistence adapters, safety layer, instant workout, rate limiting</td><td class="num">34</td></tr>
+          <tr><td>Backend/src/memory</td><td class="num">6</td><td>Embedding, fact extraction, memory store, genome, language normalizer</td><td class="num">87</td></tr>
+          <tr><td>Backend/src/intervention</td><td class="num">6</td><td>Churn risk model, five interventions, Sunday Letter, Why Button</td><td class="num">53</td></tr>
+          <tr><td>Backend/src/voice</td><td class="num">5</td><td>Intent rules, session state machine, personas, speech seams</td><td class="num">108</td></tr>
+          <tr><td>Frontend/src</td><td class="num">9</td><td>App shell, workspace, onboarding, intervention, voice, instant workout</td><td class="num">0</td></tr>
+          <tr><td>ai-service</td><td class="num">2</td><td>Python service — deterministic, calls no external model</td><td class="num">3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede">The four Node rows add to the 282 the vitals report. The Python service runs under its own runner and its 3 are counted separately, which an earlier version of this table left ambiguous.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Open work, in the order it matters</h2>
+      <span class="rule"></span>
+      <span class="count">Four items</span>
+    </div>
+    <p class="lede">Ranked by what unblocks the most downstream work, not by what the roadmap implies next.</p>
+
+    <div class="work">
+      <article class="item">
+        <div class="rank">01</div>
+        <h3>Run through the app and write down the gaps <span class="chip" data-s="todo">Yours</span></h3>
+        <p>Your pass over frontend and backend functionality now that Phase 4 is closed. This is the input that reorders everything below it.</p>
+        <div class="why"><b>Why first:</b> a list of real defects from someone using the product beats any list I can generate from the code.</div>
+      </article>
+
+      <article class="item">
+        <div class="rank">02</div>
+        <h3>Store per-set and per-exercise performance <span class="chip" data-s="risk">Data model</span></h3>
+        <p>Sets, reps and load per exercise per session. Nothing records this today, so the Why Button has to decline the master plan's own headline example — <em>"you stalled on bench press three weeks running"</em> — because there is no bench press history to read.</p>
+        <div class="why"><b>Why it's load-bearing:</b> not a wording fix. It changes the schema, both persistence adapters, the logging route and the Progress view, and every future progression feature waits on it.</div>
+      </article>
+
+      <article class="item">
+        <div class="rank">03</div>
+        <h3>Give the frontend a test runner <span class="chip" data-s="risk">Zero today</span></h3>
+        <p>282 backend tests and no frontend runner configured at all. Every UI defect of the last three increments — the unstyled auth screen, the native Back button, the mis-centred icons, the dark plate — was found by looking at a screenshot, and each would have shipped past a green suite.</p>
+        <div class="why"><b>Why before more surface:</b> the browser-driving loop keeps paying for itself, which is the tell that it should be automated rather than repeated. The Phase 4 gap pass proved it twice over — neither of the two remaining frontend fixes was reachable from the backend suite.</div>
+      </article>
+
+      <article class="item">
+        <div class="rank">04</div>
+        <h3>Finish onboarding, and teach memory Urdu <span class="chip" data-s="partial">Partial</span></h3>
+        <p>Onboarding asks four of the ten fields the generator reads — goal, environment, equipment, available days. It never asks limitations, session duration, fitness level or dietary preferences, and the profile has no age, height, weight or gender at all. Separately, the memory extractor is English-only while voice already speaks three languages.</p>
+        <div class="why"><b>Why them together:</b> both are the product knowing less about the person than it claims to. The generator guesses in the gaps, and the two layers disagree about which languages the product supports.</div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Pulled forward from deferred</h2>
+      <span class="rule"></span>
+      <span class="count">New scope</span>
+    </div>
+    <p class="lede">Three of these sit in the master plan's <em>Explicitly deferred</em> list, and one is a fork the plan asked to be settled before implementation that was never taken. Recording them here so they stop being invisible.</p>
+
+    <div class="work">
+      <article class="item">
+        <div class="rank">A</div>
+        <h3>Camera form analysis, with a camera picker <span class="chip" data-s="todo">New</span></h3>
+        <p>Form checking and rep counting from a live camera. The specific requirement you raised: <b>on desktop the app must let a person choose which camera to attach</b>, because a desktop has no built-in one and an external webcam or a second device may be the right lens. That means enumerating input devices, showing them by label, and remembering the choice — mobiles get their built-in camera and never see the picker.</p>
+        <div class="why"><b>What it needs:</b> <code>getUserMedia</code> plus on-device pose estimation (MediaPipe or TF.js Pose — a real ML dependency, first in this project). Frames stay on the device, which matches how voice already works. A placement question comes with it: the plan's open question is whether this counts as diagnosing a movement fault.</div>
+      </article>
+
+      <article class="item">
+        <div class="rank">B</div>
+        <h3>Wearables — Google Fit, HealthKit, Garmin <span class="chip" data-s="todo">New</span></h3>
+        <p>Read steps, heart rate, sleep and workout sessions rather than asking a person to type them. The churn model in Phase 3 is currently fed by manual logging only, so a rhythm break it could see directly is a rhythm break it currently infers.</p>
+        <div class="why"><b>What it needs:</b> OAuth against each provider, and a hard platform split — Apple's HealthKit has no web API, so health data on iOS needs a native bridge. This is the item that cannot be done in a browser.</div>
+      </article>
+
+      <article class="item">
+        <div class="rank">C</div>
+        <h3>Native Android and iOS <span class="chip" data-s="risk">Architecture fork</span></h3>
+        <p>The app is responsive web and already works at 430px in a mobile browser, so <em>responsive on all screens</em> is done for the browser. Native apps are a different thing, and the master plan said to settle Flutter-versus-React-Native <em>before</em> implementation began — that fork was never taken, because the build went React web.</p>
+        <div class="why"><b>The three routes:</b> wrap the existing React app with Capacitor and gain store presence and native bridges cheaply; rewrite in React Native and keep the language but not the code; or ship a PWA and accept no App Store. HealthKit and reliable background reminders are the features that decide it.</div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Gaps inside the shipped phases</h2>
+      <span class="rule"></span>
+      <span class="count">Recorded in the build log</span>
+    </div>
+    <p class="lede">Each phase recorded its own gaps as it shipped. These are the ones still open below Phase 4. Phase 4's own surviving gaps are three platform limits and one deliberate product call — barge-in that trails a turn behind, no on-device Urdu voice, outcome-claim workout names announced generically, and a sub-thirty-second session logging reps but no minutes — each written up with its reasoning in the build log rather than left as an unexplained missing feature.</p>
+
+    <div class="work">
+      <article class="item">
+        <div class="rank">—</div>
+        <h3>Phase 4's remaining gaps are accepted, not overlooked</h3>
+        <p>None of the four is a fix waiting to be made. Barge-in needs detected speech rather than a sent transcript, which is a permissions and echo-cancellation problem. Urdu TTS depends on whether the platform ships a usable <code>ur-PK</code> voice. The generic announcement for an outcome-claim name is the safety layer correctly refusing to speak a promise. And a 25-second session is left with no duration because rounding it up to "1 minute" would put a figure in someone's history larger than the work they did.</p>
+        <div class="why"><b>Why recorded:</b> so a later pass can tell a decision from an oversight. The first three are platform limits; the last is a product call that a future change should answer with a seconds field rather than by making minutes lie.</div>
+      </article>
+      <article class="item">
+        <div class="rank">—</div>
+        <h3>The Overview still shows a hardcoded coach note</h3>
+        <p>The "A note for you" panel says <em>"You've been consistent this week…"</em> regardless of the log, and it now sits directly above a card that <em>is</em> derived from real data. The difference is conspicuous in a way it was not before Phase 3.</p>
+      </article>
+      <article class="item">
+        <div class="rank">—</div>
+        <h3>Nothing is ever delivered</h3>
+        <p>Notification preferences have an API, storage and a Settings UI, but no reminder has ever been sent. The Sunday Letter is composed on request rather than arriving — the master plan's letter is something that shows up.</p>
+      </article>
+      <article class="item">
+        <div class="rank">—</div>
+        <h3>Recall is lexical, not semantic</h3>
+        <p>The embedding layer is deterministic and runs offline. A paraphrase with no shared vocabulary misses until a real embedding provider is configured. There is also no memory expiry policy — nothing is forgotten automatically.</p>
+      </article>
+      <article class="item">
+        <div class="rank">—</div>
+        <h3>The churn model is not personalised</h3>
+        <p>Weights are hand-set constants with no per-user calibration. Defensible against one person's history, and the thing to revisit once there is more. The <code>weekday-drift</code> signal also rarely fires alone — it is largely redundant with <code>silence</code>.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Decisions locked</h2>
+      <span class="rule"></span>
+      <span class="count">Settled</span>
+    </div>
+
+    <div class="decisions">
+      <dl class="decision">
+        <dt>Local only, for now</dt>
+        <dd>Everything runs on this machine. No deployment work until the product is deeply satisfactory — so the stale Vercel bundle is left stale on purpose rather than chased.</dd>
+        <span class="chip" data-s="done">Decided</span>
+      </dl>
+      <dl class="decision">
+        <dt>Hetzner for the backend, when the time comes</dt>
+        <dd>Chosen host for the API. Triggers a short list when it happens: a Postgres instance, the migrations in <code>db/schema.sql</code>, the AI service container, TLS, and <code>VITE_API_BASE_URL</code> plus <code>ALLOWED_ORIGINS</code> set to the real frontend origin.</dd>
+        <span class="chip" data-s="done">Decided</span>
+      </dl>
+      <dl class="decision">
+        <dt>Phase 4 closed before any new scope started</dt>
+        <dd>Met on 24 Sep: six gaps fixed and verified, four recorded as accepted with their reasoning. Your QA pass is the input that reorders the open work, and it now reads a finished phase rather than a moving one.</dd>
+        <span class="chip" data-s="done">Met</span>
+      </dl>
+      <dl class="decision">
+        <dt>Camera and wearables move out of <em>deferred</em></dt>
+        <dd>Both were deferred in the master plan's MVP scope. They are now tracked, with the camera picker on desktop called out as a requirement rather than a nicety.</dd>
+        <span class="chip" data-s="done">Decided</span>
+      </dl>
+      <dl class="decision">
+        <dt>Native mobile is an open fork</dt>
+        <dd>Capacitor, React Native, or PWA. Not decided, and it should be settled before wearable work starts, because HealthKit is what forces it.</dd>
+        <span class="chip" data-s="partial">Open</span>
+      </dl>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Standing constraints</h2>
+      <span class="rule"></span>
+      <span class="count">Non-negotiable</span>
+    </div>
+    <div class="note stop">
+      <b>These do not change as features land.</b> The service-role key and JWT secret stay in backend environment variables and never reach the React frontend. No LLM or third-party key is exposed client-side. Real health data and session tokens never enter version control. The safety layer always constrains output and never surfaces as a mode a person can switch off. Red-flag screening never depends on the AI service being up. The product does not diagnose, prescribe, or promise a health outcome — including when a workout is named after one, which is why an outcome-claim name is announced with a generic line rather than read aloud.
+    </div>
+  </section>
+
+  <footer>
+    <span>FitPulse AI — build board</span>
+    <span>Master plan v2.0 · build log in PROJECT.md §1–23</span>
+  </footer>
+
+</div>
