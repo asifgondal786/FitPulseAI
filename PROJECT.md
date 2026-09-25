@@ -1107,3 +1107,59 @@ It is true in the week it happens and false the next time they beat it, so the l
 - **A set carries no timing.** Two sessions of four sets look identical whether they took twenty minutes or an hour, so nothing in this layer can speak to rest or density.
 - **The set boundary is only as good as the person's finger.** Nothing detects a set ending, so a set nobody finished is invisible, and a session where the count was never banked reads as an empty record rather than as a miscount. `summariseExercises` reports `tracked: false` for it, which is honest but not the same as right.
 - The accepted gaps from §21 stand underneath this work: there is still no delivery mechanism for the letter, recall is lexical rather than semantic, there is no memory expiry policy, `weekday-drift` remains largely redundant with `silence`, and the churn weights are still hand-set.
+
+## 25. An Audit of the Three Repositories, and Three Defects It Found
+
+This section records the `2026-09-25` fix pass, run immediately after the three repositories were pushed. It is not a phase; it is what an audit of the split turned up.
+
+### How the audit was done
+
+The question was whether every file was in the right repository. Listing tracked files does not answer it, so each repository was **cloned fresh** and compared against its working tree — and then actually used: `npm ci && npm run build` for the frontend, `npm ci && npm test` for the backend, both from the clone.
+
+The result was clean, and worth recording because it is the property the split exists to protect:
+
+- **File sets are byte-identical** between each clone and its working tree, with no untracked files anywhere. That means every repository's tracked set *is* its non-ignored disk content — nothing is sitting on disk uncommitted.
+- **The frontend builds from a clone**, regenerating the gitignored pose assets, and produces `index-CzU9QY_k.js` — the same hash §24 records. A clone produces a byte-identical bundle.
+- **The backend passes 316/316 from a clone.**
+- **No secrets or data.** `data/session-store.json` and `.env` have never been committed — checked through history with `--diff-filter=A`, not only the working tree. The only `.env*` files tracked are the two templates, both with empty secret fields.
+- **Each repository is standalone.** Every Docker build context is repo-relative, so each builds without the other two present.
+
+The three defects below came out of looking at the built output rather than the file list. None of them is a "wrong repository" problem; all three are consequences of the split that only became visible once the project was on GitHub.
+
+### The launcher assumed it was never cloned alone
+
+`start-local.ps1` ran `Set-Location '$root\Backend'` with no check that the folder exists. That was harmless while all three folders always sat together. The project repository is on GitHub now, so it can be cloned alone — and the failure that produces is three PowerShell windows opening onto a directory that is not there, which reads as a **broken script** rather than as an unfinished checkout. The fix is one clone per app, and nothing in that error suggests it.
+
+The script now names which apps are present, which are missing, and prints the clone commands with the path already filled in. Two more checks in the same shape, because they fail the same way:
+
+- **A cloned app has no `node_modules`**, and `npm start` in that tree fails on a missing module rather than on the fact that nothing was installed.
+- **`python` missing from PATH** skips the AI service with a warning rather than stopping. This one is deliberately *not* fatal: the API falls back to deterministic responses when the AI service is unreachable, so the app runs without it, and a missing runtime should not block the two services that work. It is said out loud all the same, because the symptom — blander coach answers — looks like a bug in the coach rather than a missing runtime.
+
+### The browser tab said "frontend"
+
+The Vite scaffold default, never changed. It now reads `FitPulse AI`.
+
+### The fonts were fetched from Google
+
+`src/index.css` opened with an `@import` from `fonts.googleapis.com`, which put a request to a third party in front of every page load. That is the trade this app refuses everywhere else — §22 serves the pose runtime and the pose model from this origin *precisely because a workout is health data*, and `sync-pose-assets.mjs` exists to keep it that way. A font request leaks less than a workout does, but it still tells Google who is opening a fitness app and when, and a rule kept in one place and broken in another is not a rule.
+
+Both families now come from `@fontsource-variable`, pinned exactly, bundled by Vite and served as hashed assets from this origin. Three decisions in that:
+
+- **Variable rather than static.** The stylesheet asks for four weights of each family; the packages ship one variable file per family covering all of them, so this is two files rather than eight.
+- **`wght.css` rather than `index.css`.** The latter also carries the optical-size axis, which nothing here sets. A wider file for an axis that is never addressed is weight bought for nothing.
+- **No font binary is committed**, for the same reason no pose asset is: it is reproducible from a pinned version in `package.json`, and committing six megabytes of binary to every clone to save a download that `npm ci` performs anyway is the wrong trade.
+
+The packages name the families `DM Sans Variable` and `Manrope Variable`, so all 29 references across the two stylesheets were renamed to match. Renaming them back would mean hand-writing `@font-face` rules against paths inside `node_modules` — the fragility this avoids — so sharing a name with the packages is the smaller cost.
+
+### Validation
+
+- **The launcher was run in three states**: the project repository alone, both apps present with no dependencies, and one present and one missing. Each prints the right message, exits `1`, and starts nothing. It was also parse-checked, because PowerShell's failure mode for a syntax error in a script nobody has run is silence.
+- **The frontend from a fresh clone**: `npm ci && npm run build` succeeds, 84 tests pass, `tsc -b` and `oxlint` are clean apart from the two pre-existing warnings.
+- **The built bundle contains no external host of any kind** — no `fonts.googleapis.com`, no CDN. The only absolute URLs left are inert strings inside vendored library code: Emscripten's error-message documentation links and W3C namespace URIs, none of which is ever requested.
+- **The fonts serve from this origin**, verified over HTTP against the built artifact: the two latin `woff2` files return `200` with content-type `font/woff2` at 36,932 and 24,836 bytes, and the `@font-face` family names match every rule that uses them.
+
+### Known gaps
+
+- **Manrope ships Cyrillic, Greek and Vietnamese subsets** that this app will never render. They are emitted to `dist` and never fetched — `unicode-range` sees to that — so the cost is deployment size rather than a request anyone makes. Trimming them means overriding the package's CSS, which is the same fragility the family names avoid. Left as is, deliberately.
+- **Neither family has Arabic, so Urdu falls back to a system font.** This was equally true of the Google Fonts request, so it is not a regression — but it is a real gap for an app that ships three languages, and it is now recorded rather than hidden behind a `<link>`.
+- The launcher checks that `Backend/` and `Frontend/` exist, not that they are the *right* repositories. A folder named `Backend` holding something else would pass. Checking for a git remote would close it; it is not worth the complexity for a script that runs on one machine.
