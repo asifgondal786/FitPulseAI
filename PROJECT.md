@@ -747,16 +747,16 @@ The letter's one adjustment is framed as a change to the plan rather than as adv
 
 ### The Why Button
 
-The master plan's example is *"Why 3 sets? Because your last 2 sessions declined in set 4."* That answer needs per-set performance data, which this system does not record — and a Why Button that invents a reason is worse than no Why Button, because the entire value of the feature is that the explanation can be trusted.
+The master plan's example is *"Why 3 sets? Because your last 2 sessions declined in set 4."* That answer needs per-set performance data, which at the time of this increment the system did not record — and a Why Button that invents a reason is worse than no Why Button, because the entire value of the feature is that the explanation can be trusted. *(The data model that closes this is §24. The rule below is what made the layer honest while the data was missing, and it is the rule §24 built the answer on top of rather than around.)*
 
-So the module is built on one rule: **an answer either cites evidence from the genome or admits there is none. There is no third branch.** `explain` returns `confident: false` exactly when it took the second one, so the interface can render an admission differently from an explanation. Asked the master plan's own per-set question, it declines in as many words: "I cannot point to a reason for that specific movement yet — per-exercise and per-set reasoning needs session-level detail this system does not record, and I would rather say that than invent one."
+So the module is built on one rule: **an answer either cites evidence from the genome or admits there is none. There is no third branch.** `explain` returns `confident: false` exactly when it took the second one, so the interface can render an admission differently from an explanation. Asked the master plan's own per-set question, it declined in as many words: "I cannot point to a reason for that specific movement yet — per-exercise and per-set reasoning needs session-level detail this system does not record, and I would rather say that than invent one." *(That exact sentence is now reached only when there is no per-set record at all — a new account, or a movement nothing has been logged for. When there is a record, §24 answers the question.)*
 
 Questions are routed to one of nine explainers by an ordered topic list — `constraint`, `exercise`, `frequency`, `recovery`, `intensity`, `nutrition`, `progress`, `plan`, `general` — where first match wins and the specific topics come before the general ones. Two routing bugs found in live use are worth recording, because both failed silently:
 
 - **`rest days?` sat inside the frequency pattern**, so "Do I need a rest day?" was answered as a question about weekly frequency. Counting rest days is frequency; needing one is recovery. Removed.
 - **`\bsquat\b` does not match "squats"** — `t` to `s` is not a word boundary — so every plural movement name fell through to the general explainer with nothing looking wrong. People write "why do my squats hurt" far more often than "why does my squat hurt". The movement pattern now takes `\w*` suffixes throughout and the constraint pattern accepts plurals.
 
-The constraint rule sits above the exercise rule on purpose. "Why is my knee sore after squats?" names both, and the movement explainer is the one that has to decline; answering a question about pain with an admission would be a worse answer than the one the constraint explainer can give, which is to say what the person told us and what the plan does about it.
+The constraint rule sits above the exercise rule on purpose. "Why is my knee sore after squats?" names both, and the exercise explainer is the one that has less to say; answering a question about pain with what the movement record shows would be a worse answer than the one the constraint explainer can give, which is to say what the person told us and what the plan does about it. That ordering did not change when §24 gave the exercise explainer something to answer with — a sore knee is a fact about the person, and a set count is not.
 
 Answers report the same numbers the risk model used, restated in a `context` block, so the Why Button and the intervention card cannot disagree about why.
 
@@ -793,12 +793,12 @@ Accepting does real work rather than recording a click. The session is built fro
 
 ### Known gaps
 
-- **Per-set and per-exercise performance is not recorded**, which is why the Why Button must decline the master plan's own headline example. Closing this is a data-model change — sets, reps and load per exercise per session — not a wording change, and it is the single largest gap in this layer.
+- ~~**Per-set and per-exercise performance is not recorded**, which is why the Why Button must decline the master plan's own headline example.~~ **Closed in §24.** A session now carries a `sets` array, the genome summarises it per movement, and the Why Button answers the headline question from it.
 - **`weekday-drift` rarely fires alone.** `anchorRecentCount` is measured over the same 14-day window that the driver requires to be empty, so in practice a drifted anchor almost always coincides with a lapse, and the `bad-day` route it feeds is rarely reached from that driver. The signal is correct but largely redundant with `silence`.
-- **The Overview's "A note for you" coach panel still shows hardcoded text** ("You've been consistent this week...") that is not derived from the user's actual log. It predates this layer and now sits directly above a card that *is* derived, which makes the difference conspicuous.
+- ~~**The Overview's "A note for you" coach panel still shows hardcoded text** ("You've been consistent this week...") that is not derived from the user's actual log.~~ **Closed in §24.** The panel now renders the genome's Progress Narrative.
 - The churn model is not personalised beyond the rhythm ratio. Weights are hand-set constants, and there is no per-user calibration — defensible with one person's history, and the thing to revisit when there is more.
 - There is no delivery mechanism. The Sunday Letter is composed on request rather than sent, and nothing emails or notifies. The master plan's letter is something that arrives; this is something that is available.
-- The letter's milestone observation is capped at 40 sessions and keys off a multiple of five, which is a placeholder for a real notion of what is worth marking.
+- ~~The letter's milestone observation is capped at 40 sessions and keys off a multiple of five, which is a placeholder for a real notion of what is worth marking.~~ **Closed in §24.** It is now a personal best — a week that beat every week before it.
 - Phase 2's open gaps still apply underneath this layer: recall is lexical rather than semantic, the extractor is English-only, and there is no memory expiry policy. The Urdu and Roman-Urdu gap in particular has to close before Phase 4 rather than during it.
 
 ## 22. Voice and Hands-Free: Four Voices, Three Languages, No Vendor
@@ -1001,7 +1001,7 @@ Both were found by looking at the screenshot, and neither would have been caught
 
 ### Validation
 
-- Backend suite: **272 tests passing**, one more than §22 — the origin allowlist decision table in `security.test.js`.
+- Backend suite: **283 tests passing**, one more than §22 — the origin allowlist decision table in `security.test.js`. *(Corrected in §24: this line read "272", which cannot be one more than the 282 §22 records. The two neighbours agree at 282 and 316, so the figure here was the slip.)*
 - Verified with `curl` against the running server, exactly as a browser does it: the preflight from `https://fit-pulse-ai-iota.vercel.app` returns 204 with `Access-Control-Allow-Origin` echoing that origin, and a preflight from an unrelated origin returns 204 with **no** `Access-Control-Allow-Origin` at all.
 - Verified through the UI with a real account: registered over the API, then signed in through the redesigned form — filling the fields, toggling the reveal (`text` then `password`), submitting — landing in the workspace as `Returning User` with **zero console errors**. Onboarding correctly appeared, that account never having completed it.
 - The full walkthrough of §22 was re-run end to end afterwards and is still green.
@@ -1013,3 +1013,97 @@ Both were found by looking at the screenshot, and neither would have been caught
 - **`ALLOWED_ORIGINS` on a deployed backend is the operator's responsibility**, and the failure mode is the same silence that caused this one — except that in production the server log is not somewhere anyone is watching. A startup line naming the allowlist would help; there is one in the refusal path and not yet in the boot path.
 - **The brand panel is not localised.** Phase 4 built three languages for the workout and the app's chrome is English throughout, so this is consistent rather than new, but it is the screen where a first impression is formed.
 - The auth screen has **no loading skeleton and no "forgot password"** path. The first is cosmetic; the second is a real product gap with no backend behind it at all.
+
+## 24. Per-Set Performance: the Record the Why Button Needed
+
+This section records the `2026-09-25` increment. It closes the three gaps §21 opened and named, and it is the increment that lets the Coach AI layer answer the master plan's own headline question.
+
+### The gap, quoted from where it was left
+
+§21 wrote the hole down in as many words:
+
+> **Per-set and per-exercise performance is not recorded**, which is why the Why Button must decline the master plan's own headline example. Closing this is a data-model change — sets, reps and load per exercise per session — not a wording change, and it is the single largest gap in this layer.
+
+The master plan's example is *"Why 3 sets? Because your last 2 sessions declined in set 4."* Until now the Why Button answered it by admitting it could not, and `Backend/test/intervention.test.js` asserted that admission verbatim — which made the shortcoming a tested guarantee rather than something nobody had noticed. That test is not deleted here. It is kept, and it now covers the case it was always really about: an exercise question with no per-set record behind it still returns an admission, and `confident` is still `false` for it. An honesty property that is only tested on the happy path is not tested.
+
+### A set is a field on the session, not a table
+
+`Backend/db/schema.sql` gains one column: `workout_logs.sets`, `JSONB`. Three reasons, in order of weight:
+
+1. **Nothing queries into a set.** Every consumer — the genome, the churn model, the Why Button, the letter — loads the history and reasons over it in application code. That is how the genome already works, and a joined table would buy an index nobody uses.
+2. **The shape will grow.** `voice_sessions` set the precedent for a document-shaped record that is read whole. Unpacking a shape that changes every increment costs a migration every time it changes.
+3. The column is added with its own idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, because `CREATE TABLE IF NOT EXISTS` is a no-op against a database that already exists. This is the same trap §20 recorded, and it is worth stating twice.
+
+The shape is `{ exercise, reps, loadKg, heldSeconds }`, and two decisions inside it are deliberate:
+
+- **A set records what was done, not what was prescribed.** `reps` is null on a hold and `heldSeconds` is null on a lift. Defaulting either to zero would put a number in the record that nobody performed — and that number would then average into every figure quoted back to the person.
+- **A set cannot be empty.** A row recording neither reps nor a hold is refused at the boundary. It would count toward the session's set totals while saying nothing about what was done, which is worse than having one fewer set on file.
+
+`Backend/src/training-sets.js` owns the shape, the validation and the summary — `normaliseSets`, `summariseExercises`, `matchExercise`. Both storage adapters implement it: `repository.js` for Postgres and `local-store.js` for the file store. A session logged before this increment reads back as an empty list rather than `undefined`, so every consumer can iterate a log without a guard. No new entry was needed in `store.js`'s `CONTRACT` — the existing methods carry the field.
+
+### The genome summarises it per movement
+
+`buildGenome` gains a `training` block, computed by `summariseExercises`: per movement, the sessions it appears in, total sets, total reps, median reps per set, median sets per session, a trend, and the last three sessions in full.
+
+Two things about it are worth recording.
+
+**The unit is the set, not the session.** "You did four sessions of squats" says nothing about whether the fourth set was being finished, which is exactly what the plan is asking when it asks for three.
+
+**The trend splits the movement's own history in half**, rather than comparing against a date range or a population baseline. Four sessions in a fortnight and four across four months are different stories, so the comparison that matters is against this movement's own recent past. Below three sessions the answer is `new` — calling a first session a direction is worse than saying there is not one yet.
+
+**The raw sessions are kept, newest first.** "The drop came at set 3" cannot be recovered from a median, so the ordered list survives into the summary for the Why Button to quote.
+
+### The Why Button answers the headline question
+
+The exercise explainer was rewritten from a decline into an answer with three branches:
+
+- **A movement named and on file** — it cites the sessions, the total sets, the sets-per-session, and the set that gave out. A set is called a drop when it falls a fifth below the best set of that session and comes after it. Anything smaller is ordinary variation, and calling it a decline would turn noise into a story.
+- **No movement named but a record exists** — it answers with what sets usually come to, across the movements that do have one.
+- **Nothing tracked** — the original admission, unchanged.
+
+The `topic !== 'exercise'` exemption was removed from the `confident` calculation, which is now `evidence.length > 0 && topic !== 'nutrition'`. That is the rule it always claimed to be: an answer either cites evidence from the genome or admits there is none, and there is no third branch. The exemption existed because there was nothing to cite; it is gone now that there is.
+
+`why.context` also carries a `movements` list — capped at six to match the prompt — so the interface can restate the same numbers the explanation used. The Why Button and the intervention card must never disagree about why.
+
+### The camera produces real set boundaries
+
+`Frontend/src/CameraWorkoutView.tsx` counts reps but cannot see where a set ends. To a pose model, someone standing between sets and someone standing at the top of a rep are the same picture. So the boundary belongs to the person: a **Finish set** action banks whatever the counter holds and starts the next set from zero.
+
+This also fixed a promise the screen was making and not keeping. The note under the exercise picker reads *"Anything already counted stays in the session total"* — and switching movement mid-set was silently discarding those reps, because the counter was replaced without banking it. Banking on the boundary makes both the note and the record true.
+
+`finishSet` installs a **fresh** counter rather than resetting the existing one. The tracker reads `counterRef` on every frame, so a reset would let the boundary itself register as movement, and the first rep of the next set would be counted before it happened.
+
+`Frontend/src/pose/sets.ts` holds the logic — reading a set off a counter, grouping for the summary, converting to the wire shape — and lives outside the screen so it can be tested without a camera. That matters because it is the last pure function before the data leaves the device and writes into a health record. The camera now posts `sets` structured rather than flattening them into a note; the note is a summary of the data rather than the data itself.
+
+### The other two gaps
+
+**The Overview's "A note for you" panel** showed a fixed sentence — *"You've been consistent this week, Jordan"* — to everyone, including someone who had never trained, directly above a card that genuinely *was* derived. It now renders the genome's Progress Narrative, served by a new `GET /api/coach/note`, which returns the text and the facts it was built from. The byline says `N sessions logged · last one N days ago` rather than `Coach Nova · just now`, and the status chip says `From your log` rather than `Online` — nothing there is a live session, and the chip should not imply someone is waiting.
+
+The narrative is the Progress Narrative feature, and it is deterministic and offline. No model is called for it, and there is no path by which that panel can say something about a person that is not in their record.
+
+**The letter's milestone** counted to five and stopped at forty. Five is a round number rather than an achievement — the fifth session says nothing the fourth did not — and the rule expired at forty, which is precisely when a person's records get harder to beat and therefore more worth naming. It is replaced by a **personal best**: a week with more sessions than every week before it, measured against the person's own history and bounded at the week they started. Weeks before the first session are not quieter weeks, they are weeks that did not exist, and counting them would let a record be set against nothing.
+
+It is true in the week it happens and false the next time they beat it, so the line is structurally unable to repeat, and it is never awarded for a number somebody else chose. A first week of one session is not a personal best — naming it one would be dressing up the first thing anyone ever did. The now-dead `throughLastWeek` flag went with the rule it served.
+
+### Validation
+
+- Backend suite: **316 tests passing**, up from 282 in §22 — 34 new. `training-sets.test.js` is 26 of them and covers the module's whole contract: validation on every malformed shape (each returning an error sentence rather than throwing), the per-session caps, hold-versus-lift nulls, case- and space-insensitive grouping, the three-session floor on a trend, and the newest-first ordering of the retained raw sessions. The rest are a per-set round trip through the store, the genome's `training` assertions, the reworked Why Button in both directions, and three tests for the new milestone — the old rule had **none**, which is how it went unnoticed that the suite stayed green when it was replaced.
+- Frontend suite: **84 tests passing**, up from 71. `pose/sets.test.ts` is 13 of them, written against the real pose fixtures, and it asserts the rounding rule rather than a magic millisecond value.
+- `tsc -b` clean; `oxlint src` reports only the two pre-existing `set-state-in-effect` warnings; `npm run build` clean at 362.66 kB / 115.26 kB gzip.
+- **Verified live over HTTP**, which is the check that matters for a data-model change. Three declining sessions of goblet squats were posted with `sets`, and:
+  - `POST /api/coach/why` with *"Why 3 sets of goblet squats?"* returned `confident: true`, citing the per-set numbers of each session.
+  - **The master plan's headline question, *"Why 3 sets of squats?"*, returned**: *"Goblet squat has been logged across 4 sessions, 16 sets in all. It runs to about 4 sets a session. Last time the sets went 12, 11, 6, 4, so the drop came at set 3."*
+  - `GET /api/coach/note` returned the narrative with its basis, and a **brand-new account** returned the opening branch rather than the consistent-week sentence: *"Nothing logged yet. The plan is built around fat loss, and the first session is the one that starts the record."* — with a basis line reading `0 sessions`. The second clause tracks the account's stated goal, so the sentence is composed rather than swapped.
+- The client's wire output was fed through the server's `normaliseSets` directly, confirming the two shapes agree: `[12, 10, 6]` reps and a 45-second plank were accepted, stored with the correct nulls, and read back as two movements and four sets.
+
+### What is not verified
+
+**No camera was available, so the camera screen has not been driven.** The set-boundary logic beneath it — `setFrom`, `groupSets`, `toWireSets` — is covered by 13 tests, and the screen typechecks, builds and serves. The screen itself is not. This is the same standing gap §22 recorded for the voice mode, and it is larger here: set boundaries are the one thing this increment added that only a person in front of a camera can exercise.
+
+### Known gaps
+
+- **Load is recorded and never used.** A set carries `loadKg`, the camera view sends none, and nothing reads it. It is stored because retrofitting it later would leave a hole in the middle of the record, and because whether somebody is getting stronger is mostly a question about load.
+- **The drop threshold is a fixed fifth.** It is a defensible default rather than a personalised one. With a single person's history there is nothing to calibrate against.
+- **A set carries no timing.** Two sessions of four sets look identical whether they took twenty minutes or an hour, so nothing in this layer can speak to rest or density.
+- **The set boundary is only as good as the person's finger.** Nothing detects a set ending, so a set nobody finished is invisible, and a session where the count was never banked reads as an empty record rather than as a miscount. `summariseExercises` reports `tracked: false` for it, which is honest but not the same as right.
+- The accepted gaps from §21 stand underneath this work: there is still no delivery mechanism for the letter, recall is lexical rather than semantic, there is no memory expiry policy, `weekday-drift` remains largely redundant with `silence`, and the churn weights are still hand-set.
